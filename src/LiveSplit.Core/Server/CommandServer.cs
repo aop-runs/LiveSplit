@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Design;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Linq;
@@ -291,6 +292,20 @@ public class CommandServer
                 State.IsGameTimePaused = true;
                 break;
             }
+            case "getgamename":
+            case "getcurrentgamename":
+            {
+                response = State.Run.GameName.ToString();
+                break;
+            }
+            case "getcategoryname":
+            case "getcurrentcategoryname":
+            {
+                String category = State.Run.CategoryName.ToString();
+                String extendedcategory = State.Run.GetExtendedCategoryName(true, true, true).ToString();
+                response = (category.Length != extendedcategory.Length) ? extendedcategory.Insert(category.Length, " -") : category;
+                break;
+            }
             case "getdelta":
             {
                 string comparison = args.Length > 1 ? args[1] : State.CurrentComparison;
@@ -430,6 +445,12 @@ public class CommandServer
             case "getcurrenttimerphase":
             {
                 response = State.CurrentPhase.ToString();
+                break;
+            }
+            case "getcomparisonname":
+            case "getcurrentcomparisonname":
+            {
+                response = State.CurrentComparison.ToString();
                 break;
             }
             case "setcomparison":

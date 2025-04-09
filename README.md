@@ -143,7 +143,10 @@ Commands that return a string:
 
 - getcurrentsplitname  
 - getprevioussplitname
+- getcurrentgamename
+- getcurrentcategoryname
 - getcurrenttimerphase
+- getcurrentcomparisonname
 - getcustomvariablevalue NAME
 - ping  
 (always returns `pong`)
