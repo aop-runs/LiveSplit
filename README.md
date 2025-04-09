@@ -146,6 +146,7 @@ Commands that return a string:
 - getcurrenttimerphase
 - getgamename
 - getcategoryname
+- getextendedcategoryname
 - getcomparisonname
 - getcustomvariablevalue NAME
 - ping  

@@ -298,9 +298,12 @@ public class CommandServer
             }
             case "getcategoryname":
             {
-                String category = State.Run.CategoryName.ToString();
-                String extendedcategory = State.Run.GetExtendedCategoryName(true, true, true).ToString();
-                response = (category.Length != extendedcategory.Length) ? extendedcategory.Insert(category.Length, " -") : category;
+                response = State.Run.CategoryName.ToString();
+                break;
+            }
+            case "getextendedcategoryname":
+            {
+                response = State.Run.GetExtendedCategoryName(true, true, true).ToString();
                 break;
             }
             case "getdelta":
