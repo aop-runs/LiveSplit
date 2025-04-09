@@ -292,13 +292,11 @@ public class CommandServer
                 break;
             }
             case "getgamename":
-            case "getcurrentgamename":
             {
                 response = State.Run.GameName.ToString();
                 break;
             }
             case "getcategoryname":
-            case "getcurrentcategoryname":
             {
                 String category = State.Run.CategoryName.ToString();
                 String extendedcategory = State.Run.GetExtendedCategoryName(true, true, true).ToString();
@@ -447,7 +445,6 @@ public class CommandServer
                 break;
             }
             case "getcomparisonname":
-            case "getcurrentcomparisonname":
             {
                 response = State.CurrentComparison.ToString();
                 break;
