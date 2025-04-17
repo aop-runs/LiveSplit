@@ -148,6 +148,7 @@ Commands that return a string:
 - getcategoryname
 - getextendedcategoryname
 - getcomparisonname
+- gettimingmethod
 - getcustomvariablevalue NAME
 - ping  
 (always returns `pong`)

@@ -471,6 +471,11 @@ public class CommandServer
 
                 break;
             }
+            case "gettimingmethod":
+            {
+                response = State.CurrentTimingMethod.ToString();
+                break;
+            }
             case "setsplitname":
             case "setcurrentsplitname":
             {
