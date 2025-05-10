@@ -136,6 +136,7 @@ Commands that return an int:
 
 - getsplitindex  
 (returns -1 if the timer is not running)
+- getsplitcount
 - getattemptcount
 - getcompletedcount
 

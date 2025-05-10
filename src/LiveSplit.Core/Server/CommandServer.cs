@@ -329,6 +329,12 @@ public class CommandServer
                 response = splitindex.ToString();
                 break;
             }
+            case "getsplitcount":
+            {
+                int splitcount = State.Run.Count;
+                response = splitcount.ToString();
+                break;
+            }
             case "getcurrentsplitname":
             {
                 if (State.CurrentSplit != null)
