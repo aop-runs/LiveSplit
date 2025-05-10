@@ -147,8 +147,8 @@ Commands that return a string:
 - getcurrenttimerphase
 - getgamename
 - getcategoryname
-- getcategoryvariables
-(returns only {} if no variables are present)
+- getcategoryvariables  
+(returns {} if no variables are present)
 - getcomparisonname
 - gettimingmethod
 - getcustomvariablevalue NAME
