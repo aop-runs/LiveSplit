@@ -400,14 +400,12 @@ public class CommandServer
             }
             case "getsplitindex":
             {
-                int splitindex = State.CurrentSplitIndex;
-                response = splitindex.ToString();
+                response = State.CurrentSplitIndex.ToString();
                 break;
             }
             case "getsplitcount":
             {
-                int splitcount = State.Run.Count;
-                response = splitcount.ToString();
+                response = State.Run.Count.ToString();
                 break;
             }
             case "getcurrentsplitname":
