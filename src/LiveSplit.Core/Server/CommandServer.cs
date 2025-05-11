@@ -5,6 +5,7 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -303,19 +304,19 @@ public class CommandServer
             }
             case "getcategoryvariables":
             {
-                var keyL = new List<string>();
+                Dictionary<string, Object> keys = new Dictionary<string, Object>();
                 //Region
                 bool doSimpleRegion = !State.Run.Metadata.GameAvailable;
                 if (doSimpleRegion)
                 {
                     if (!string.IsNullOrEmpty(State.Run.Metadata.RegionName))
                     {
-                        keyL.Add($"\"region\": \"{State.Run.Metadata.RegionName}\"");
+                        keys.Add("region", State.Run.Metadata.RegionName);
                     }
                 }
                 else if (State.Run.Metadata.Region != null && !string.IsNullOrEmpty(State.Run.Metadata.Region.Abbreviation) && State.Run.Metadata.Game != null && State.Run.Metadata.Game.Regions.Count > 1)
                 {
-                    keyL.Add($"\"region\": \"{State.Run.Metadata.Region.Abbreviation}\"");
+                    keys.Add("region", State.Run.Metadata.Region.Abbreviation);
                 }
                 //Platform
                 bool doSimplePlatform = !State.Run.Metadata.GameAvailable;
@@ -323,19 +324,19 @@ public class CommandServer
                 {
                     if (State.Run.Metadata.UsesEmulator)
                     {
-                        keyL.Add($"\"platform\": \"{State.Run.Metadata.PlatformName} Emulator\"");
+                        keys.Add("platform", $"{State.Run.Metadata.PlatformName} Emulator");
                     }
                     else
                     {
-                        keyL.Add($"\"platform\": \"{State.Run.Metadata.PlatformName}\"");
+                        keys.Add("platform", State.Run.Metadata.PlatformName);
                     }
                 }
                 else if (State.Run.Metadata.UsesEmulator)
                 {
-                    keyL.Add($"\"platform\": \"Emulator\"");
+                    keys.Add("platform", "Emulator");
                 }
                 //Variables
-                var vKeys = new List<string>();
+                Dictionary<string, string> varDict = new Dictionary<string, string>();
                 IEnumerable<string> variables = State.Run.Metadata.VariableValueNames.Keys;
                 if (State.Run.Metadata.GameAvailable && State.Run.Metadata.Game != null)
                 {
@@ -355,30 +356,24 @@ public class CommandServer
                         string valueLower = variableValue.ToLowerInvariant();
                         if (valueLower == "yes")
                         {
-                            vKeys.Add($"\"{variable}\": \"{name}\"");
+                            varDict.Add(variable, name);
                         }
                         else if (valueLower == "no")
                         {
-                            vKeys.Add($"\"{variable}\": \"No {name}\"");
+                            varDict.Add(variable, $"No {name}");
                         }
                         else
                         {
-                            vKeys.Add($"\"{variable}\": \"{variableValue}\"");
+                            varDict.Add(variable, variableValue);
                         }
                     }
                 }
-                if (vKeys.Any())
+                if (varDict.Count > 0)
                 {
-                    String variablePairs = $"{{{string.Join(", ", vKeys)}}}";
-                    keyL.Add($"\"variables\": {variablePairs}");
+                    keys.Add("variables", varDict);
                 }
                 //Combine
-                String keys = "";
-                if (keyL.Any())
-                {
-                    keys = string.Join(", ", keyL);
-                }
-                response = $"{{{keys}}}";
+                response = JsonSerializer.Serialize(keys);
                 break;
             }
             case "getdelta":
