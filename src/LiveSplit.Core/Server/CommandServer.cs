@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -31,6 +32,7 @@ public class CommandServer
     protected NamedPipeServerStream WaitingServerPipe { get; set; }
 
     protected bool AlwaysPauseGameTime { get; set; }
+    protected record CategoryMetaData(string Region, string Platform, IReadOnlyDictionary<string, string> Variables);
 
     public CommandServer(LiveSplitState state)
     {
@@ -304,36 +306,37 @@ public class CommandServer
             }
             case "getcategoryvariables":
             {
-                Dictionary<string, Object> keys = new Dictionary<string, Object>();
                 //Region
+                string region = null;
                 bool doSimpleRegion = !State.Run.Metadata.GameAvailable;
                 if (doSimpleRegion)
                 {
                     if (!string.IsNullOrEmpty(State.Run.Metadata.RegionName))
                     {
-                        keys.Add("region", State.Run.Metadata.RegionName);
+                        region = State.Run.Metadata.RegionName;
                     }
                 }
                 else if (State.Run.Metadata.Region != null && !string.IsNullOrEmpty(State.Run.Metadata.Region.Abbreviation) && State.Run.Metadata.Game != null && State.Run.Metadata.Game.Regions.Count > 1)
                 {
-                    keys.Add("region", State.Run.Metadata.Region.Abbreviation);
+                    region =  State.Run.Metadata.Region.Abbreviation;
                 }
                 //Platform
+                string platform = null;
                 bool doSimplePlatform = !State.Run.Metadata.GameAvailable;
                 if (!string.IsNullOrEmpty(State.Run.Metadata.PlatformName) && (doSimplePlatform || (State.Run.Metadata.Game != null && State.Run.Metadata.Game.Platforms.Count > 1)))
                 {
                     if (State.Run.Metadata.UsesEmulator)
                     {
-                        keys.Add("platform", $"{State.Run.Metadata.PlatformName} Emulator");
+                        platform = $"{State.Run.Metadata.PlatformName} Emulator";
                     }
                     else
                     {
-                        keys.Add("platform", State.Run.Metadata.PlatformName);
+                        platform = State.Run.Metadata.PlatformName;
                     }
                 }
                 else if (State.Run.Metadata.UsesEmulator)
                 {
-                    keys.Add("platform", "Emulator");
+                    platform = "Emulator";
                 }
                 //Variables
                 Dictionary<string, string> varDict = new Dictionary<string, string>();
@@ -345,8 +348,10 @@ public class CommandServer
                     {
                         categoryId = State.Run.Metadata.Category.ID;
                     }
+                    
                     variables = State.Run.Metadata.Game.FullGameVariables.Where(x => x.CategoryID == null || x.CategoryID == categoryId).Select(x => x.Name);
                 }
+
                 foreach (string variable in variables)
                 {
                     if (State.Run.Metadata.VariableValueNames.ContainsKey(variable))
@@ -368,12 +373,13 @@ public class CommandServer
                         }
                     }
                 }
-                if (varDict.Count > 0)
-                {
-                    keys.Add("variables", varDict);
-                }
                 //Combine
-                response = JsonSerializer.Serialize(keys);
+                CategoryMetaData metadata = new CategoryMetaData(region, platform, varDict.Count() > 0 ? varDict : null);
+                response = JsonSerializer.Serialize(metadata, new JsonSerializerOptions()
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                });
                 break;
             }
             case "getdelta":
