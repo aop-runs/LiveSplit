@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -31,8 +30,8 @@ public class CommandServer
     protected ITimeFormatter TimeFormatter { get; set; }
     protected NamedPipeServerStream WaitingServerPipe { get; set; }
 
-    protected bool AlwaysPauseGameTime { get; set; }
-    protected record CategoryMetaData(string Region, string Platform, IReadOnlyDictionary<string, string> Variables);
+    private bool AlwaysPauseGameTime { get; set; }
+    private record CategoryMetaData(string Region, string Platform, bool UsesEmulator, IReadOnlyDictionary<string, string> Variables);
 
     public CommandServer(LiveSplitState state)
     {
@@ -316,28 +315,19 @@ public class CommandServer
                         region = State.Run.Metadata.RegionName;
                     }
                 }
-                else if (State.Run.Metadata.Region != null && !string.IsNullOrEmpty(State.Run.Metadata.Region.Abbreviation) && State.Run.Metadata.Game != null && State.Run.Metadata.Game.Regions.Count > 1)
+                else if (State.Run.Metadata.Region != null && !string.IsNullOrEmpty(State.Run.Metadata.Region.Abbreviation) && State.Run.Metadata.Game != null)
                 {
-                    region =  State.Run.Metadata.Region.Abbreviation;
+                    region = State.Run.Metadata.Region.Abbreviation;
                 }
                 //Platform
                 string platform = null;
                 bool doSimplePlatform = !State.Run.Metadata.GameAvailable;
-                if (!string.IsNullOrEmpty(State.Run.Metadata.PlatformName) && (doSimplePlatform || (State.Run.Metadata.Game != null && State.Run.Metadata.Game.Platforms.Count > 1)))
+                if (!string.IsNullOrEmpty(State.Run.Metadata.PlatformName) && (doSimplePlatform || (State.Run.Metadata.Game != null)))
                 {
-                    if (State.Run.Metadata.UsesEmulator)
-                    {
-                        platform = $"{State.Run.Metadata.PlatformName} Emulator";
-                    }
-                    else
-                    {
-                        platform = State.Run.Metadata.PlatformName;
-                    }
+                    platform = State.Run.Metadata.PlatformName;
                 }
-                else if (State.Run.Metadata.UsesEmulator)
-                {
-                    platform = "Emulator";
-                }
+                //Uses Emulator
+                bool usesEmulator = State.Run.Metadata.UsesEmulator;
                 //Variables
                 Dictionary<string, string> varDict = new Dictionary<string, string>();
                 IEnumerable<string> variables = State.Run.Metadata.VariableValueNames.Keys;
@@ -348,37 +338,22 @@ public class CommandServer
                     {
                         categoryId = State.Run.Metadata.Category.ID;
                     }
-                    
+
                     variables = State.Run.Metadata.Game.FullGameVariables.Where(x => x.CategoryID == null || x.CategoryID == categoryId).Select(x => x.Name);
                 }
 
                 foreach (string variable in variables)
                 {
-                    if (State.Run.Metadata.VariableValueNames.ContainsKey(variable))
+                    if (State.Run.Metadata.VariableValueNames.TryGetValue(variable, out string value))
                     {
-                        string name = variable.TrimEnd('?');
-                        string variableValue = State.Run.Metadata.VariableValueNames[variable];
-                        string valueLower = variableValue.ToLowerInvariant();
-                        if (valueLower == "yes")
-                        {
-                            varDict.Add(variable, name);
-                        }
-                        else if (valueLower == "no")
-                        {
-                            varDict.Add(variable, $"No {name}");
-                        }
-                        else
-                        {
-                            varDict.Add(variable, variableValue);
-                        }
+                        varDict.Add(variable, value);
                     }
                 }
-                //Combine
-                CategoryMetaData metadata = new CategoryMetaData(region, platform, varDict.Count() > 0 ? varDict : null);
+
+                CategoryMetaData metadata = new(region, platform, usesEmulator, varDict);
                 response = JsonSerializer.Serialize(metadata, new JsonSerializerOptions()
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
                 break;
             }
