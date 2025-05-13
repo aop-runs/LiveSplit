@@ -19,6 +19,11 @@ namespace LiveSplit.Server;
 
 public class CommandServer
 {
+    private static readonly JsonSerializerOptions _serializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     public TcpListener Server { get; set; }
     public WebSocketServer WsServer { get; set; }
     public List<Connection> PipeConnections { get; set; }
@@ -31,7 +36,6 @@ public class CommandServer
     protected NamedPipeServerStream WaitingServerPipe { get; set; }
 
     private bool AlwaysPauseGameTime { get; set; }
-    private record CategoryMetaData(string Region, string Platform, bool UsesEmulator, IReadOnlyDictionary<string, string> Variables);
 
     public CommandServer(LiveSplitState state)
     {
@@ -305,56 +309,43 @@ public class CommandServer
             }
             case "getcategoryvariables":
             {
-                //Region
+                RunMetadata md = State.Run.Metadata;
+
+                // Region
                 string region = null;
-                bool doSimpleRegion = !State.Run.Metadata.GameAvailable;
-                if (doSimpleRegion)
+                if (md is { Game: null, RegionName.Length: > 0 })
                 {
-                    if (!string.IsNullOrEmpty(State.Run.Metadata.RegionName))
-                    {
-                        region = State.Run.Metadata.RegionName;
-                    }
+                    region = md.RegionName;
                 }
-                else if (State.Run.Metadata.Region != null && !string.IsNullOrEmpty(State.Run.Metadata.Region.Abbreviation) && State.Run.Metadata.Game != null)
+                else if (md is { Region.Abbreviation.Length: > 0, Game.Regions.Count: > 1 })
                 {
-                    region = State.Run.Metadata.Region.Abbreviation;
+                    region = md.Region.Abbreviation;
                 }
-                //Platform
+
+                // Platform
                 string platform = null;
-                bool doSimplePlatform = !State.Run.Metadata.GameAvailable;
-                if (!string.IsNullOrEmpty(State.Run.Metadata.PlatformName) && (doSimplePlatform || (State.Run.Metadata.Game != null)))
+                if (md is { PlatformName.Length: > 0, Game: null or { Platforms.Count: > 1 } })
                 {
-                    platform = State.Run.Metadata.PlatformName;
-                }
-                //Uses Emulator
-                bool usesEmulator = State.Run.Metadata.UsesEmulator;
-                //Variables
-                Dictionary<string, string> varDict = new Dictionary<string, string>();
-                IEnumerable<string> variables = State.Run.Metadata.VariableValueNames.Keys;
-                if (State.Run.Metadata.GameAvailable && State.Run.Metadata.Game != null)
-                {
-                    string categoryId = null;
-                    if (State.Run.Metadata.CategoryAvailable && State.Run.Metadata.Category != null)
-                    {
-                        categoryId = State.Run.Metadata.Category.ID;
-                    }
-
-                    variables = State.Run.Metadata.Game.FullGameVariables.Where(x => x.CategoryID == null || x.CategoryID == categoryId).Select(x => x.Name);
+                    platform = md.PlatformName;
                 }
 
-                foreach (string variable in variables)
+                // Variables
+                IEnumerable<string> varNames = md.Game?.FullGameVariables
+                    .Where(fgv => fgv.CategoryID == md.Category?.ID)
+                    .Select(fgv => fgv.Name)
+                    ?? md.VariableValueNames.Keys;
+
+                Dictionary<string, string> variables = [];
+                foreach (string varName in varNames)
                 {
-                    if (State.Run.Metadata.VariableValueNames.TryGetValue(variable, out string value))
+                    if (md.VariableValueNames.TryGetValue(varName, out string value))
                     {
-                        varDict.Add(variable, value);
+                        variables.Add(varName, value);
                     }
                 }
 
-                CategoryMetaData metadata = new(region, platform, usesEmulator, varDict);
-                response = JsonSerializer.Serialize(metadata, new JsonSerializerOptions()
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                CategoryMetadata metadata = new(region, platform, md.UsesEmulator, variables);
+                response = JsonSerializer.Serialize(metadata, _serializerOptions);
                 break;
             }
             case "getdelta":
@@ -668,3 +659,9 @@ public class CommandServer
         WaitingServerPipe.Dispose();
     }
 }
+
+file sealed record CategoryMetadata(
+    string Region,
+    string Platform,
+    bool UsesEmulator,
+    IReadOnlyDictionary<string, string> Variables);
