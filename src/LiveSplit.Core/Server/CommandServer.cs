@@ -520,7 +520,7 @@ public class CommandServer
                 success = SaveLayout(true);
                 if (!success)
                 {
-                    Log.Error($"[Server] Failed to save current layout to {args[1]}");
+                    Log.Error($"[Server] Failed to save current layout");
                 }
 
                 response = success.ToString();
@@ -532,7 +532,7 @@ public class CommandServer
                 success = SaveSplits(false, true);
                 if (!success)
                 {
-                    Log.Error($"[Server] Failed to save current splits to {args[1]}");
+                    Log.Error($"[Server] Failed to save current splits");
                 }
 
                 response = success.ToString();
