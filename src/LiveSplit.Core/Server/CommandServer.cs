@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Windows.Media;
 
 using LiveSplit.Model;
 using LiveSplit.Options;
@@ -33,13 +34,13 @@ public class CommandServer
     protected Func<Image> ScreenShotFunction { get; set; }
     protected Func<bool, bool> SaveLayout { get; set; }
     protected Func<bool, bool, bool> SaveSplits { get; set; }
-    protected Func<string, bool> OpenLayoutFromFile { get; set; }
-    protected Func<string, bool> OpenRunFromFile { get; set; }
+    protected Func<string, bool> OpenLayoutWithoutPrompts { get; set; }
+    protected Func<string, bool> OpenRunWithoutPrompts { get; set; }
     protected NamedPipeServerStream WaitingServerPipe { get; set; }
 
     protected bool AlwaysPauseGameTime { get; set; }
 
-    public CommandServer(LiveSplitState state, Func<Image> screenShotFunction, Func<bool, bool> saveLayout, Func<bool, bool, bool> saveSplits, Func<string, bool> openLayoutFromFile, Func<string, bool> openRunFromFile)
+    public CommandServer(LiveSplitState state, Func<Image> screenShotFunction, Func<bool, bool> saveLayout, Func<bool, bool, bool> saveSplits, Func<string, bool> openLayoutWithoutPrompts, Func<string, bool> openRunWithoutPrompts)
     {
         Model = new TimerModel();
         PipeConnections = [];
@@ -51,8 +52,8 @@ public class CommandServer
         ScreenShotFunction = screenShotFunction;
         SaveLayout = saveLayout;
         SaveSplits = saveSplits;
-        OpenLayoutFromFile = openLayoutFromFile;
-        OpenRunFromFile = openRunFromFile;
+        OpenLayoutWithoutPrompts = openLayoutWithoutPrompts;
+        OpenRunWithoutPrompts = openRunWithoutPrompts;
 
         Model.CurrentState = State;
         State.OnStart += State_OnStart;
@@ -541,7 +542,7 @@ public class CommandServer
             case "switchlayoutfile":
             {
                 bool success = false;
-                success = OpenLayoutFromFile(args[1]);
+                success = OpenLayoutWithoutPrompts(args[1]);
                 if (!success)
                 {
                     Log.Error($"[Server] Failed to change current layout to {args[1]}");
@@ -553,7 +554,7 @@ public class CommandServer
             case "switchsplitsfile":
             {
                 bool success = false;
-                success = OpenRunFromFile(args[1]);
+                success = OpenRunWithoutPrompts(args[1]);
                 if (!success)
                 {
                     Log.Error($"[Server] Failed to change current splits to {args[1]}");
@@ -569,10 +570,6 @@ public class CommandServer
                 try
                 {
                     image = ScreenShotFunction();
-                    if (image is null)
-                    {
-                        break;
-                    }
                 }
                 catch (Exception e)
                 {
@@ -600,20 +597,21 @@ public class CommandServer
 
                 else
                 {
+                    bool success;
                     try
                     {
                         image.Save(args[1]);
-                        response = "True";
+                        success = true;
                     }
                     catch (Exception e)
                     {
                         Log.Error(e);
                         Log.Error($"[Server] Failed to save screenshot file: {args[1]}");
-                        response = "False";
+                        success = false;
                     }
+                    response = success.ToString();
                 }
-
-                    break;
+                break;
             }
             case "ping":
             {

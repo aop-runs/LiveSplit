@@ -9,6 +9,7 @@ using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -321,8 +322,8 @@ public partial class TimerForm : Form
             MakeScreenShot,
             SaveLayout,
             SaveSplits,
-            OpenLayoutFromFileWithoutPrompts,
-            OpenRunFromFileWithoutPrompts);
+            OpenLayoutWithoutPrompts,
+            OpenRunWithoutPrompts);
         Server.StartNamedPipe();
 
         new System.Timers.Timer(1000) { Enabled = true }.Elapsed += PerSecondTimer_Elapsed;
@@ -1894,7 +1895,7 @@ public partial class TimerForm : Form
         return layout;
     }
 
-    private bool OpenRunFromFileWithoutPrompts(string filePath)
+    private bool OpenRunWithoutPrompts(string filePath)
     {
 
         bool success = false;
@@ -2045,10 +2046,21 @@ public partial class TimerForm : Form
         {
             if (suppressPrompts)
             {
-                Log.Error("No default filepath exists for current splits.");
-                return false;
+                string defaultFilename;
+                if (!string.IsNullOrEmpty(CurrentState.Run.GameName) || !string.IsNullOrEmpty(CurrentState.Run.CategoryName))
+                {
+                    defaultFilename = string.Join(" - ", new string[] { CurrentState.Run.GameName, CurrentState.Run.CategoryName }.Where(s => !string.IsNullOrEmpty(s)));
+                }
+                else
+                {
+                    defaultFilename = "Splits";
+                }
+                savePath = Path.Combine(new string[] { Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), $"{defaultFilename}.lss" });
             }
-            return SaveSplitsAs(promptPBMessage);
+            else
+            {
+                return SaveSplitsAs(promptPBMessage);
+            }
         }
 
         CurrentState.Run.FixSplits();
@@ -2143,10 +2155,12 @@ public partial class TimerForm : Form
         {
             if (suppressPrompts)
             {
-                Log.Error("No default filepath exists for current layout.");
-                return false;
+                savePath = Path.Combine(new string[] {Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Layout.lss" });
             }
-            return SaveLayoutAs();
+            else
+            {
+                return SaveLayoutAs();
+            }
         }
 
         try
@@ -2494,7 +2508,7 @@ public partial class TimerForm : Form
         }
     }
 
-    private bool OpenLayoutFromFileWithoutPrompts(string filePath)
+    private bool OpenLayoutWithoutPrompts(string filePath)
     {
         bool success = false;
         Cursor.Current = Cursors.WaitCursor;
