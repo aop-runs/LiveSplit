@@ -1924,7 +1924,6 @@ public partial class TimerForm : Form
         }
         catch (Exception e)
         {
-            Log.Error(e);
             Log.Error($"The selected file was not recognized as a splits file. ({e.Message})");
         }
 
@@ -2122,12 +2121,12 @@ public partial class TimerForm : Form
             if (!suppressPrompts)
             {
                 MessageBox.Show(this, "Splits could not be saved!", "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.Error(ex);
             }
             else
             {
-                Log.Error("Splits could not be saved!");
+                Log.Error($"Splits could not be saved! ({ex.Message})");
             }
-            Log.Error(ex);
             return false;
         }
 
@@ -2190,12 +2189,13 @@ public partial class TimerForm : Form
             if (!suppressPrompts)
             {
                 MessageBox.Show(this, "Layout could not be saved!", "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.Error(ex);
             }
             else
             {
-                Log.Error("Layout could not be saved!");
+                Log.Error($"Layout could not be saved! ({ex.Message})");
             }
-            Log.Error(ex);
+            
             return false;
         }
 
@@ -2524,7 +2524,6 @@ public partial class TimerForm : Form
         }
         catch (Exception e)
         {
-            Log.Error(e);
             Log.Error($"The selected file was not recognized as a layout file. ({e.Message})");
         }
         Cursor.Current = Cursors.Arrow;
