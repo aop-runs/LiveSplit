@@ -514,35 +514,6 @@ public class CommandServer
                 response = string.IsNullOrEmpty(value) ? "-" : Regex.Replace(value, @"\r\n?|\n", " ");
                 break;
             }
-            case "setcustomvariable":
-            {
-                if (args.Length < 2)
-                {
-                    Log.Error($"[Server] Command {command} incorrect usage: missing one or more arguments.");
-                    break;
-                }
-
-                string[] options;
-                try
-                {
-                    options = JsonSerializer.Deserialize<string[]>(args[1]);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                    Log.Error($"[Server] Failed to parse JSON: {args[1]}");
-                    break;
-                }
-
-                if (options == null || options.Length < 2)
-                {
-                    Log.Error($"[Server] Command {command} incorrect usage: missing one or more arguments.");
-                    break;
-                }
-
-                State.Run.Metadata.SetCustomVariable(options[0], options[1]);
-                break;
-            }
             case "savelayout":
             {
                 bool success = false;
