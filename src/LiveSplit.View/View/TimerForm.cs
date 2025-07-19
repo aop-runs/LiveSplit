@@ -1897,9 +1897,7 @@ public partial class TimerForm : Form
 
     private bool OpenRunWithoutPrompts(string filePath)
     {
-
         bool success = false;
-        Cursor.Current = Cursors.WaitCursor;
         try
         {
             Model.Reset();
@@ -1926,8 +1924,6 @@ public partial class TimerForm : Form
         {
             Log.Error($"The selected file was not recognized as a splits file. ({e.Message})");
         }
-
-        Cursor.Current = Cursors.Arrow;
         return success;
     }
 
@@ -2511,7 +2507,6 @@ public partial class TimerForm : Form
     private bool OpenLayoutWithoutPrompts(string filePath)
     {
         bool success = false;
-        Cursor.Current = Cursors.WaitCursor;
         try
         {
             if (!string.Equals(filePath, Layout.FilePath))
@@ -2526,8 +2521,6 @@ public partial class TimerForm : Form
         {
             Log.Error($"The selected file was not recognized as a layout file. ({e.Message})");
         }
-        Cursor.Current = Cursors.Arrow;
-
         return success;
     }
 
