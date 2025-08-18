@@ -319,6 +319,7 @@ public partial class TimerForm : Form
         BackColor = Color.Black;
 
         Server = new CommandServer(CurrentState,
+            Hook,
             MakeScreenShot,
             SaveLayout,
             SaveSplits,

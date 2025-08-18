@@ -104,6 +104,7 @@ Commands that generate no response:
 - skipsplit
 - pause
 - resume
+- undoallpauses
 - reset
 - starttimer
 - setgametime TIME
@@ -115,6 +116,9 @@ Commands that generate no response:
 - setcomparison COMPARISON
 - switchto realtime
 - switchto gametime
+- enableglobalhotkeys
+- disableglobalhotkeys
+- switchhotkeyprofile NAME
 - setsplitname INDEX NAME
 - setcurrentsplitname NAME
 - setcustomvariable JSON([NAME, VALUE])
@@ -142,8 +146,10 @@ Commands that return an int:
 
 Commands that return True/False whether or not the request succeeds:
 
-- savecurrentlayout
-- savecurrentsplits
+- savelayout
+- savesplits
+- savelayoutas FILEPATH
+- savesplitsas FILEPATH
 - switchlayoutfile FILEPATH
 - switchsplitsfile FILEPATH
 - savesplitsscreenshot FILEPATH

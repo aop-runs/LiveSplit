@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 using LiveSplit.Model;
+using LiveSplit.Model.Input;
 using LiveSplit.Options;
 using LiveSplit.TimeFormatters;
 
@@ -28,6 +29,7 @@ public class CommandServer
     public List<TcpConnection> TcpConnections { get; set; }
 
     protected LiveSplitState State { get; set; }
+    protected CompositeHook Hook { get; set; }
     protected Form Form { get; set; }
     protected TimerModel Model { get; set; }
     protected ITimeFormatter TimeFormatter { get; set; }
@@ -40,7 +42,7 @@ public class CommandServer
 
     protected bool AlwaysPauseGameTime { get; set; }
 
-    public CommandServer(LiveSplitState state, Func<Image> screenShotFunction, Func<bool, bool> saveLayout, Func<bool, bool, bool> saveSplits, Func<string, bool> openLayoutWithoutPrompts, Func<string, bool> openRunWithoutPrompts)
+    public CommandServer(LiveSplitState state, CompositeHook hook, Func<Image> screenShotFunction, Func<bool, bool> saveLayout, Func<bool, bool, bool> saveSplits, Func<string, bool> openLayoutWithoutPrompts, Func<string, bool> openRunWithoutPrompts)
     {
         Model = new TimerModel();
         PipeConnections = [];
@@ -48,6 +50,7 @@ public class CommandServer
         TimeFormatter = new PreciseTimeFormatter();
 
         State = state;
+        Hook = hook;
         Form = state.Form;
         ScreenShotFunction = screenShotFunction;
         SaveLayout = saveLayout;
@@ -221,6 +224,11 @@ public class CommandServer
                     Model.Pause();
                 }
 
+                break;
+            }
+            case "undoallpauses":
+            {
+                Model.UndoAllPauses();
                 break;
             }
             case "resume":
@@ -544,32 +552,80 @@ public class CommandServer
                 State.Run.Metadata.SetCustomVariable(options[0], options[1]);
                 break;
             }
+            case "enableglobalhotkeys":
+            {
+                State.Settings.HotkeyProfiles[State.CurrentHotkeyProfile].GlobalHotkeysEnabled = true;
+                break;
+            }
+            case "disableglobalhotkeys":
+            {
+                State.Settings.HotkeyProfiles[State.CurrentHotkeyProfile].GlobalHotkeysEnabled = false;
+                break;
+            }
+            case "switchhotkeyprofile":
+            {
+                if (State.Settings.HotkeyProfiles.ContainsKey(args[1]))
+                {
+                    State.CurrentHotkeyProfile = args[1];
+                    State.Settings.UnregisterAllHotkeys(Hook);
+                    State.Settings.RegisterHotkeys(Hook, State.CurrentHotkeyProfile);
+                }
+                else
+                {
+                    Log.Error($"[Server] Hotkey profile not found: {args[1]}");
+                }
+                break;
+            }
             case "ping":
             {
                 response = "pong";
                 break;
             }
             case "savelayout":
+            case "savelayoutas":
             {
                 bool success = false;
-                success = SaveLayout(true);
-                if (!success)
+                if (args[1].EndsWith(".lsl"))
                 {
-                    Log.Error($"[Server] Failed to save current layout");
+                    if (command == "savelayoutas")
+                    {
+                        State.Layout.FilePath = args[1];
+                    }
+                    success = SaveLayout(true);
+                    if (!success)
+                    {
+                        Log.Error($"[Server] Failed to save current layout");
+                    }
                 }
 
+                else
+                {
+                    Log.Error($"[Server] Cannot save layout with a file type that is not .lsl: {args[1]}");
+                }
                 response = success.ToString();
                 break;
             }
             case "savesplits":
+            case "savesplitsas":
             {
                 bool success = false;
-                success = SaveSplits(false, true);
-                if (!success)
+                if (args[1].EndsWith(".lss"))
                 {
-                    Log.Error($"[Server] Failed to save current splits");
+                    if (command == "savesplitsas")
+                    {
+                        State.Run.FilePath = args[1];
+                    }
+                    success = SaveSplits(false, true);
+                    if (!success)
+                    {
+                        Log.Error($"[Server] Failed to save current splits");
+                    }
                 }
 
+                else
+                {
+                    Log.Error($"[Server] Cannot save splits with a file type that is not .lss: {args[1]}");
+                }
                 response = success.ToString();
                 break;
             }
