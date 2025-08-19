@@ -13,7 +13,6 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 using LiveSplit.Model;
-using LiveSplit.Model.Input;
 using LiveSplit.Options;
 using LiveSplit.TimeFormatters;
 
