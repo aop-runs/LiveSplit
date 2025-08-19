@@ -29,10 +29,10 @@ public class CommandServer
     public List<TcpConnection> TcpConnections { get; set; }
 
     protected LiveSplitState State { get; set; }
-    protected CompositeHook Hook { get; set; }
     protected Form Form { get; set; }
     protected TimerModel Model { get; set; }
     protected ITimeFormatter TimeFormatter { get; set; }
+    protected Action RefreshHotkeyHooks { get; set; }
     protected Func<Image> ScreenShotFunction { get; set; }
     protected Func<bool, bool> SaveLayout { get; set; }
     protected Func<bool, bool, bool> SaveSplits { get; set; }
@@ -42,7 +42,7 @@ public class CommandServer
 
     protected bool AlwaysPauseGameTime { get; set; }
 
-    public CommandServer(LiveSplitState state, CompositeHook hook, Func<Image> screenShotFunction, Func<bool, bool> saveLayout, Func<bool, bool, bool> saveSplits, Func<string, bool> openLayoutWithoutPrompts, Func<string, bool> openRunWithoutPrompts)
+    public CommandServer(LiveSplitState state, Action refreshHotkeyHooks, Func<Image> screenShotFunction, Func<bool, bool> saveLayout, Func<bool, bool, bool> saveSplits, Func<string, bool> openLayoutWithoutPrompts, Func<string, bool> openRunWithoutPrompts)
     {
         Model = new TimerModel();
         PipeConnections = [];
@@ -50,8 +50,8 @@ public class CommandServer
         TimeFormatter = new PreciseTimeFormatter();
 
         State = state;
-        Hook = hook;
         Form = state.Form;
+        RefreshHotkeyHooks = refreshHotkeyHooks;
         ScreenShotFunction = screenShotFunction;
         SaveLayout = saveLayout;
         SaveSplits = saveSplits;
@@ -567,8 +567,7 @@ public class CommandServer
                 if (State.Settings.HotkeyProfiles.ContainsKey(args[1]))
                 {
                     State.CurrentHotkeyProfile = args[1];
-                    State.Settings.UnregisterAllHotkeys(Hook);
-                    State.Settings.RegisterHotkeys(Hook, State.CurrentHotkeyProfile);
+                    RefreshHotkeyHooks();
                 }
                 else
                 {
@@ -629,7 +628,7 @@ public class CommandServer
                 response = success.ToString();
                 break;
             }
-            case "switchlayoutfile":
+            case "switchlayout":
             {
                 bool success = false;
                 success = OpenLayoutWithoutPrompts(args[1]);
@@ -641,7 +640,7 @@ public class CommandServer
                 response = success.ToString();
                 break;
             }
-            case "switchsplitsfile":
+            case "switchsplits":
             {
                 bool success = false;
                 success = OpenRunWithoutPrompts(args[1]);

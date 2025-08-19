@@ -150,8 +150,8 @@ Commands that return True/False whether or not the request succeeds:
 - savesplits
 - savelayoutas FILEPATH
 - savesplitsas FILEPATH
-- switchlayoutfile FILEPATH
-- switchsplitsfile FILEPATH
+- switchlayout FILEPATH
+- switchsplits FILEPATH
 - savesplitsscreenshot FILEPATH
 
 Commands that return a string:

@@ -319,7 +319,7 @@ public partial class TimerForm : Form
         BackColor = Color.Black;
 
         Server = new CommandServer(CurrentState,
-            Hook,
+            RefreshHotkeyHooks,
             MakeScreenShot,
             SaveLayout,
             SaveSplits,
@@ -337,6 +337,17 @@ public partial class TimerForm : Form
         AllowDrop = true;
         DragDrop += TimerForm_DragDrop;
         DragEnter += TimerForm_DragEnter;
+    }
+
+    private void RefreshHotkeyHooks()
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(RefreshHotkeyHooks), null);
+            return;
+        }
+        Settings.UnregisterAllHotkeys(Hook);
+        Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
     }
 
     private void UpdateRaceProviderIntegration()
@@ -1974,8 +1985,7 @@ public partial class TimerForm : Form
                 CurrentState.CurrentHotkeyProfile = recentSplitsFile.LastHotkeyProfile;
                 if (Hook != null)
                 {
-                    Settings.UnregisterAllHotkeys(Hook);
-                    Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
+                    RefreshHotkeyHooks();
                 }
             }
         }
