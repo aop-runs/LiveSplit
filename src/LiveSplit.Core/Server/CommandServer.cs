@@ -583,22 +583,22 @@ public class CommandServer
             case "savelayoutas":
             {
                 bool success = false;
-                if (args[1].EndsWith(".lsl"))
+                if (command == "savelayoutsas")
                 {
-                    if (command == "savelayoutas")
+                    if (args[1].EndsWith(".lsl"))
                     {
                         State.Layout.FilePath = args[1];
                     }
-                    success = SaveLayout(true);
-                    if (!success)
+                    else
                     {
-                        Log.Error($"[Server] Failed to save current layout");
+                        Log.Error($"[Server] Cannot save layout with a file type that is not .lsl: {args[1]}");
+                        break;
                     }
                 }
-
-                else
+                success = SaveLayout(true);
+                if (!success)
                 {
-                    Log.Error($"[Server] Cannot save layout with a file type that is not .lsl: {args[1]}");
+                    Log.Error($"[Server] Failed to save current layout");
                 }
                 response = success.ToString();
                 break;
@@ -607,22 +607,22 @@ public class CommandServer
             case "savesplitsas":
             {
                 bool success = false;
-                if (args[1].EndsWith(".lss"))
+                if (command == "savesplitsas")
                 {
-                    if (command == "savesplitsas")
+                    if (args[1].EndsWith(".lss"))
                     {
                         State.Run.FilePath = args[1];
                     }
-                    success = SaveSplits(false, true);
-                    if (!success)
+                    else
                     {
-                        Log.Error($"[Server] Failed to save current splits");
+                        Log.Error($"[Server] Cannot save splits with a file type that is not .lss: {args[1]}");
+                        break;
                     }
                 }
-
-                else
+                success = SaveSplits(false, true);
+                if (!success)
                 {
-                    Log.Error($"[Server] Cannot save splits with a file type that is not .lss: {args[1]}");
+                    Log.Error($"[Server] Failed to save current splits");
                 }
                 response = success.ToString();
                 break;
